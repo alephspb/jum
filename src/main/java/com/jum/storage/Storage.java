@@ -1,4 +1,4 @@
-package com.rubber.storage;
+package com.jum.storage;
 
 import java.io.*;
 import java.nio.ByteBuffer;
