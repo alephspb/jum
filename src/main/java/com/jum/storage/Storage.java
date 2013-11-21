@@ -1,25 +1,30 @@
 package com.jum.storage;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: aleph
- * Date: 20.11.13
- * Time: 22:50
- * To change this template use File | Settings | File Templates.
- */
 public class Storage {
-    private Segment segment;
+    private List<Segment> segments;
+    private int segmentSize;
 
     public Storage() {
-        segment = new Segment(1048576);
+        segmentSize = 1048576;
+        segments = new ArrayList<Segment>();
+        segments.add(new Segment(segmentSize));
     }
 
     public int putObject(Object o) throws IOException {
-        return segment.put(serialize(o));
+        byte[] data = serialize(o);
+        int lastSegmentId = segments.size() - 1;
+        Segment lastSegment = segments.get(lastSegmentId);
+        if (segmentSize - lastSegment.getOffset() < data.length + 4) {
+            lastSegment = new Segment(segmentSize);
+            segments.add(lastSegment);
+            lastSegmentId = segments.size() - 1;
+        }
+
+        return lastSegmentId * segmentSize + lastSegment.put(data);
     }
 
     public Object deleteObject(int ref) {
@@ -27,7 +32,9 @@ public class Storage {
     }
 
     public Object getObject(int ref) throws IOException, ClassNotFoundException {
-        return deserialize(segment.get(ref));
+        int segmentId = ref / segmentSize;
+        Segment segment = segments.get(segmentId);
+        return deserialize(segment.get(ref % segmentSize));
     }
 
     private byte[] serialize(Object o) throws IOException {
@@ -49,7 +56,7 @@ public class Storage {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         Storage s = new Storage();
 
-        int it = 23000;
+        int it = 1000000;
 
         long l = System.currentTimeMillis();
 
@@ -58,19 +65,20 @@ public class Storage {
         for (int i = 0; i < it; i++) {
             String a = "Hello!!!" + i;
             refs[i] = s.putObject(a);
+            s.putObject(a);
         }
         for (int i = 0; i < it; i++) {
             Object o = s.getObject(refs[i]);
             refs1[i] = s.putObject("Second" + i);
-//            System.out.println(o);
+            System.out.println(o);
         }
 
         for (int i = 0; i < it; i++) {
             Object o = s.getObject(refs1[i]);
-//            System.out.println(o);
+            System.out.println(o);
         }
 
-        System.out.println(s.segment.getOffset());
+        System.out.println(s.segments.size() + ":" + s.segments.get(s.segments.size() - 1).getOffset());
         System.out.println(System.currentTimeMillis() - l);
 
     }
