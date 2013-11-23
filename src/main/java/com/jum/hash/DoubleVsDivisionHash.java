@@ -12,7 +12,7 @@ public class DoubleVsDivisionHash {
 
     public static void main(String[] args) throws IOException {
 
-        InputStream words = DoubleVsDivisionHash.class.getResourceAsStream("words.txt");
+        InputStream words = Thread.currentThread().getContextClassLoader().getResourceAsStream("words.txt");
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(words));
         String line;
         List<String> list = new ArrayList<String>();
