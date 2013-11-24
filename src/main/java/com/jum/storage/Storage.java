@@ -16,6 +16,7 @@ public class Storage {
         segmentSize = 104857600;
         segments = new ArrayList<ByteBuffer>();
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(segmentSize);
+        byteBuffer.position(1);
         segments.add(byteBuffer);
         offset = 0;
     }
@@ -29,14 +30,15 @@ public class Storage {
     public Segment allocateSegment(int len) {
         int lastSegmentId = segments.size() - 1;
         ByteBuffer lastSegment = segments.get(lastSegmentId);
-        int remain = segmentSize - lastSegment.position();
+        int remain = segmentSize - (offset % segmentSize);
         if (remain < len) {
             lastSegment = ByteBuffer.allocateDirect(segmentSize);
             segments.add(lastSegment);
-            offset += len + remain;
+            offset = segments.size() * segmentSize;
         }
-
-        return new SegmentImpl(lastSegmentId * segmentSize + lastSegment.position(), len, lastSegment);
+        Segment s = new SegmentImpl(offset, len, lastSegment);
+        offset += len;
+        return s;
     }
 
     private class SegmentImpl implements Segment {
@@ -131,19 +133,15 @@ public class Storage {
     }
 
     private static int getInt(int i, ByteBuffer byteBuffer) {
-        int pOffset = byteBuffer.position();
         byteBuffer.position(i);
         int out = byteBuffer.getInt();
-        byteBuffer.position(pOffset);
         return out;
     }
 
     private static byte[] get(int i, int len, ByteBuffer byteBuffer) {
-        int pOffset = byteBuffer.position();
         byteBuffer.position(i);
         byte[] out = new byte[len];
         byteBuffer.get(out);
-        byteBuffer.position(pOffset);
         return out;
     }
 
