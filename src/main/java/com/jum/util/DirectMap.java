@@ -133,17 +133,17 @@ public class DirectMap<K,V> implements Map<K,V> {
 
     @Override
     public Set keySet() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Collection values() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Set<Entry<K,V>> entrySet() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new UnsupportedOperationException();
     }
 
     private int getHash(int code) {
@@ -157,12 +157,12 @@ public class DirectMap<K,V> implements Map<K,V> {
         for (int i = 0; i < 10000; i++) {
 //            TestKey key1 = new TestKey(i, i);
             String value1 = "Some value" + i;
-            map.put(new TestKey(i, i), value1);
+            map.put(new TestKey(1, i), value1);
             if (i % 100 == 0)
                 System.out.println(value1);
         }
 
-        System.out.println(map.get(new TestKey(45, 45)));
+        System.out.println(map.get(new TestKey(1, 45)));
     }
 
 }

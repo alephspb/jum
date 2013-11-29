@@ -8,33 +8,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Storage {
-    private List<ByteBuffer> segments;
+    private List<ByteBuffer> chunks;
     private int segmentSize;
     private int offset;
 
     public Storage() {
         segmentSize = 104857600;
-        segments = new ArrayList<ByteBuffer>();
+        chunks = new ArrayList<ByteBuffer>();
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(segmentSize);
         byteBuffer.position(1);
-        segments.add(byteBuffer);
+        chunks.add(byteBuffer);
         offset = 0;
     }
 
     public Segment getSegment(int ref) {
         int segmentId = ref / segmentSize;
-        ByteBuffer byteBuffer = segments.get(segmentId);
+        ByteBuffer byteBuffer = chunks.get(segmentId);
         return new SegmentImpl(ref % segmentSize, -1, byteBuffer);
     }
 
     public Segment allocateSegment(int len) {
-        int lastSegmentId = segments.size() - 1;
-        ByteBuffer lastSegment = segments.get(lastSegmentId);
+        int lastSegmentId = chunks.size() - 1;
+        ByteBuffer lastSegment = chunks.get(lastSegmentId);
         int remain = segmentSize - (offset % segmentSize);
         if (remain < len) {
             lastSegment = ByteBuffer.allocateDirect(segmentSize);
-            segments.add(lastSegment);
-            offset = segments.size() * segmentSize;
+            chunks.add(lastSegment);
+            offset = chunks.size() * segmentSize;
         }
         Segment s = new SegmentImpl(offset, len, lastSegment);
         offset += len;
@@ -46,38 +46,38 @@ public class Storage {
         private int bOffset;
         private int size;
         private int pos;
-        private ByteBuffer byteBuffer;
+        private ByteBuffer chunk;
 
-        private SegmentImpl(int offset, int size, ByteBuffer byteBuffer) {
+        private SegmentImpl(int offset, int size, ByteBuffer chunk) {
             this.offset = offset;
             bOffset = offset % segmentSize;
             this.size = size;
-            this.byteBuffer = byteBuffer;
+            this.chunk = chunk;
             pos = 0;
         }
 
         @Override
         public void putInt(int data) {
-            Storage.putInt(bOffset + pos, data, byteBuffer);
+            Storage.putInt(bOffset + pos, data, chunk);
             pos += 4;
         }
 
         @Override
         public void put(byte[] o) {
-            Storage.put(bOffset + pos, o, byteBuffer);
+            Storage.put(bOffset + pos, o, chunk);
             pos += o.length;
         }
 
         @Override
         public int getInt() {
-            int out =  Storage.getInt(bOffset + pos, byteBuffer);
+            int out =  Storage.getInt(bOffset + pos, chunk);
             pos += 4;
             return out;
         }
 
         @Override
         public byte[] get(int len) {
-            byte[] out = Storage.get(bOffset + pos, len, byteBuffer);
+            byte[] out = Storage.get(bOffset + pos, len, chunk);
             pos += len;
             return out;
         }
@@ -169,7 +169,7 @@ public class Storage {
             System.out.println(o);
         }
 
-        System.out.println(s.segments.size() + ":" + s.segments.get(s.segments.size() - 1).position());
+        System.out.println(s.chunks.size() + ":" + s.chunks.get(s.chunks.size() - 1).position());
         System.out.println(System.currentTimeMillis() - l);
 
     }
