@@ -19,11 +19,17 @@ public class SerializationHelper {
         return b.toByteArray();
     }
 
-    public static Object deserialize(byte[] data) throws IOException, ClassNotFoundException {
+    public static Object deserialize(byte[] data) throws IOException {
         ByteArrayInputStream b = new ByteArrayInputStream(data);
         ObjectInputStream in = new ObjectInputStream(b);
-        Object o = in.readObject();
-        in.close();
+        Object o = null;
+        try {
+            o = in.readObject();
+        } catch (ClassNotFoundException e) {
+            throw new IOException(e);
+        } finally {
+            in.close();
+        }
         return o;
     }
 

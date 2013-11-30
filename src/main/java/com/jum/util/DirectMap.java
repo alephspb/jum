@@ -86,28 +86,37 @@ public class DirectMap<K,V> implements Map<K,V> {
                 index.position(ind * 4);
                 index.putInt(newRef);
             } else {
-                segment = storage.getSegment(ref);
+                Segment segment1 = storage.getSegment(ref);
                 while (true) {
-                    segment.position(0);
-                    int kLen = segment.getInt();
-                    segment.position(12);
-                    Object key1 = SerializationHelper.deserialize(segment.get(kLen));
+                    segment1.position(0);
+                    int kLen = segment1.getInt();
+                    segment1.position(12);
+                    Object key1 = SerializationHelper.deserialize(segment1.get(kLen));
                     if (!key.equals(key1)) {
-                        segment.position(8);
-                        int nextRef = segment.getInt();
+                        segment1.position(8);
+                        int nextRef = segment1.getInt();
                         if (nextRef > -1) {
                             //TODO check next entry
-                            segment = storage.getSegment(nextRef);
+                            segment1 = storage.getSegment(nextRef);
                         } else {
-                            segment.position(8);
-                            segment.putInt(newRef);
+                            segment1.position(8);
+                            segment1.putInt(newRef);
                             return null;
                         }
                     } else {
-//                    TODO rewrite entry
-                        return null;
+                        // Rewrite element
+                        //TODO remove previous
+                        index.position(ind * 4);
+                        index.putInt(newRef);
+                        segment.position(4);
+                        int vLen = segment.getInt();
+                        segment1.position(8);
+                        int nextRef = segment1.getInt();
+                        segment.position(8);
+                        segment.putInt(nextRef);
+                        segment1.position(12 + kLen);
+                        return (V) SerializationHelper.deserialize(segment1.get(vLen));
                     }
-
                 }
             }
         } catch (Exception e) {
@@ -157,12 +166,12 @@ public class DirectMap<K,V> implements Map<K,V> {
         for (int i = 0; i < 10000; i++) {
 //            TestKey key1 = new TestKey(i, i);
             String value1 = "Some value" + i;
-            map.put(new TestKey(1, i), value1);
+            map.put(new TestKey(i, i), value1);
             if (i % 100 == 0)
                 System.out.println(value1);
         }
 
-        System.out.println(map.get(new TestKey(1, 45)));
+        System.out.println(map.get(new TestKey(45, 45)));
     }
 
 }
